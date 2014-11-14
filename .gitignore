@@ -1,5 +1,8 @@
+notes.txt
+data.json
 basemap-1.0.7
 notes
 *.npy
 *.gpx
 *.swp
+*.pyc
