@@ -7,6 +7,7 @@ from os import listdir
 from os.path import isfile, join
 from location_cluster import cluster_location_data
 
+
 def parse_data_from_dir(data_dir):
     data_files = [join(data_dir, f) for f in listdir(data_dir) if isfile(join(data_dir, f)) and re.match("storyline.*.gpx", f)]
 
@@ -34,22 +35,31 @@ def parse_data_from_dir(data_dir):
 
     # Cluster lat, lng and add that cluster info to the data dict
     print "Clustering"
-    centroids, labels = cluster_location_data(latlng_data)
+    centroids, labels, counts = cluster_location_data(latlng_data)
     for i in range(len(data)):
-        data[i]['cluster'] = labels[i]
+        if counts[labels[i]] > 2:
+            data[i]['cluster'] = labels[i]
+        else:
+            data[i]['cluster'] = -1
 
-    return data
+    return data, centroids
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Concatenate data files into a more usable format')
     parser.add_argument('-d', '--data', default="data")
     parser.add_argument('-o', '--output', default="data.json")
+    parser.add_argument('-c', '--centroids', default="centroids.npy")
     args = parser.parse_args()
 
-    location_dicts = parse_data_from_dir(args.data)
+    location_dicts,centroids = parse_data_from_dir(args.data)
+
     out_filename = args.output
     with open(out_filename, 'w') as outfile:
         json.dump(location_dicts, outfile)
-        print "Wrote to {0}".format(out_filename)
+        print "Wrote data to {0}".format(out_filename)
 
+    out_filename = args.centroids
+    with open(out_filename, 'w') as outfile:
+        np.save(outfile, centroids)
+        print "Wrote centroids to {0}".format(out_filename)
