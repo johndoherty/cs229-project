@@ -16,8 +16,8 @@ def parse_data_from_dir(data_dir):
     latlng_data = []
     arrival_time_string = ""
 
+    print "Parsing data..."
     for data_file in data_files:
-        print "Parsing: {0}".format(data_file)
         with open(data_file, 'r') as gpx_file:
             gpx = gpxpy.parse(gpx_file)
         for track in gpx.tracks:
@@ -34,7 +34,7 @@ def parse_data_from_dir(data_dir):
                 arrival_time_string = track.segments[-1].points[-1].time.isoformat()
 
     # Cluster lat, lng and add that cluster info to the data dict
-    print "Clustering"
+    print "Clustering..."
     centroids, labels, counts = cluster_location_data(latlng_data)
     for i in range(len(data)):
         if counts[labels[i]] > 2:

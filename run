@@ -1,0 +1,7 @@
+#!/bin/bash
+
+python build_location_data.py
+python build_design_matrix.py
+#python train_and_test.py -m SVM
+#python train_and_test.py -m LogisticRegression
+python train_and_test.py -m RandomForest

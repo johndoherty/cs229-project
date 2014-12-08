@@ -30,30 +30,35 @@ def gpx_from_design_matrix(design_matrix, labels, centroids, f_name):
     with open(f_name, 'w') as out:
         out.write(gpx.to_xml())
 
-def extract_features(from_point):
+def extract_features(curr_point, previous_point):
     """
     points are given as dicts with keys (arrival_time, departure_time, lat, lng, cluster)
     """
-    datetime = dateutil.parser.parse(from_point['departure_time'])
+    current_cluster = curr_point['cluster']
+    datetime = dateutil.parser.parse(curr_point['departure_time'])
     day_of_week = datetime.weekday()
     is_weekend = (day_of_week == 5 or day_of_week == 6)
     hour_3 = datetime.time().hour / 3
     ispm = datetime.time().hour >= 12
-    return [from_point['cluster'], day_of_week, is_weekend, hour_3, ispm]
+    mwf = (day_of_week == 0 or day_of_week == 2 or day_of_week == 4)
+
+    previous_cluster = previous_point['cluster']
+
+    return [current_cluster, previous_cluster, day_of_week, is_weekend, hour_3, ispm]
+    #return [current_cluster, day_of_week, is_weekend, hour_3, ispm]
+    #return [current_cluster, day_of_week, hour_3]
 
 def build_design_matrix(data):
     X = []
     Y = []
-    for i in range(len(data) - 1):
-        if data[i]['cluster'] == data[i+1]['cluster']:
+    for i in range(1, len(data) - 1):
+        if data[i]['cluster'] == data[i+1]['cluster'] or data[i]['cluster'] == -1 or data[i+1]['cluster'] == -1:
             continue
-        X.append(extract_features(data[i]))
+        X.append(extract_features(data[i], data[i-1]))
         Y.append(data[i+1]['cluster'])
 
     X = np.array(X)
     Y = np.array(Y)
-    print X
-    print Y
 
     return X, Y
 
@@ -66,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gpx', default="design.gpx")
     args = parser.parse_args()
 
+    print "Building design matrix..."
     data = []
     with open(args.data, 'r') as data_file:
         data = json.load(data_file)
