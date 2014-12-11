@@ -56,16 +56,16 @@ def extract_features(curr_point, previous_point):
     previous_cluster[cluster_to_index[previous_point['cluster']]] = 1
 
     datetime = dateutil.parser.parse(curr_point['departure_time'])
-    day_of_week = [0] * 7
+    day_of_week = [-1] * 7
     day_of_week[datetime.weekday()] = 1
 
     hour_bin_size = 6
-    hour_bin = [0] * (24 / hour_bin_size)
+    hour_bin = [-1] * (24 / hour_bin_size)
     hour_bin[datetime.time().hour / hour_bin_size] = 1
 
-    is_weekend = 1 if (day_of_week == 5 or day_of_week == 6) else 0
-    ispm = 1 if datetime.time().hour >= 12 else 0
-    mwf = 1 if (day_of_week == 0 or day_of_week == 2 or day_of_week == 4) else 0
+    is_weekend = 1 if (day_of_week == 5 or day_of_week == 6) else -1
+    ispm = 1 if datetime.time().hour >= 12 else -1
+    mwf = 1 if (day_of_week == 0 or day_of_week == 2 or day_of_week == 4) else -1
 
     features = day_of_week + hour_bin + [is_weekend, ispm]
     features += current_cluster

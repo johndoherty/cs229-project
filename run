@@ -1,8 +1,11 @@
 #!/bin/bash
 
-python build_location_data.py -d data_john_work
+#python build_location_data.py -d data_john_school
+#python build_location_data.py -d data_john_work
+python build_location_data.py -d data_kathy
 python build_design_matrix.py
 #python train_and_test.py -m SVM
-python train_and_test.py -m LogisticRegression
+#python train_and_test.py -m LogisticRegression
+#python train_and_test.py -m NaiveBayes
 #python train_and_test.py -m RandomForest
-#python train_and_test.py -m LDA
+python train_and_test.py -m LDA
