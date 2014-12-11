@@ -37,7 +37,7 @@ def parse_data_from_dir(data_dir):
     print "Clustering..."
     centroids, labels, counts = cluster_location_data(latlng_data)
     for i in range(len(data)):
-        if counts[labels[i]] > 2:
+        if counts[labels[i]] > 4:
             data[i]['cluster'] = labels[i]
         else:
             data[i]['cluster'] = -1

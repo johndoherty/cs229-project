@@ -3,6 +3,9 @@ import dateutil.parser
 import gpxpy.gpx
 import json
 import numpy as np
+import copy
+from datetime import datetime
+from datetime import timedelta
 
 out_filename = "design_matrix.npy"
 data_filename = "data.npy"
@@ -64,8 +67,9 @@ def extract_features(curr_point, previous_point):
     ispm = 1 if datetime.time().hour >= 12 else 0
     mwf = 1 if (day_of_week == 0 or day_of_week == 2 or day_of_week == 4) else 0
 
-    #features = day_of_week + hour_bin + [is_weekend, ispm]
-    features = current_cluster + day_of_week + hour_bin + [is_weekend, ispm]
+    features = day_of_week + hour_bin + [is_weekend, ispm]
+    features += current_cluster
+    #features += previous_cluster
     return features
 
 def build_design_matrix(data):
@@ -84,6 +88,67 @@ def build_design_matrix(data):
 
     return X, Y
 
+def generate_schedule(n_locs=5, n_days=20):
+    home_1 = {
+        'lat': 0.0,
+        'lng': 0.0,
+        'arrival_time': datetime(2014, 12, 8, 0, 0, 0),
+        'departure_time': datetime(2014, 12, 8, 10, 0, 0),
+        'cluster': 0
+    }
+
+    class_1 = {
+        'lat': 0.0,
+        'lng': 0.0,
+        'arrival_time': datetime(2014, 12, 8, 10, 0, 0),
+        'departure_time': datetime(2014, 12, 8, 11, 0, 0),
+        'cluster': 1
+    }
+
+    class_2 = {
+        'lat': 0.0,
+        'lng': 0.0,
+        'arrival_time': datetime(2014, 12, 8, 11, 0, 0),
+        'departure_time': datetime(2014, 12, 8, 12, 0, 0),
+        'cluster': 2
+    }
+
+    class_3 = {
+        'lat': 0.0,
+        'lng': 0.0,
+        'arrival_time': datetime(2014, 12, 8, 13, 0, 0),
+        'departure_time': datetime(2014, 12, 8, 15, 0, 0),
+        'cluster': 3
+    }
+
+    home_2 = {
+        'lat': 0.0,
+        'lng': 0.0,
+        'arrival_time': datetime(2014, 12, 8, 15, 0, 0),
+        'departure_time': datetime(2014, 12, 8, 23, 59, 0),
+        'cluster': 0
+    }
+    day1 = [home_1, class_1, class_2, class_3, home_2]
+    day2 = copy.deepcopy(day1)
+    day2[1]['cluster'] = 4
+    day2[2]['cluster'] = 5
+    day2[3]['cluster'] = 6
+    for d in range(n_days):
+        time_d = timedelta(days=d)
+        new_day = []
+        day_of_week = d % 7
+        day = day1 if day_of_week in (1, 3, 5) else day2
+        for c in day:
+            new_c = copy.deepcopy(c)
+            new_c['arrival_time'] = (new_c['arrival_time'] + time_d).isoformat()
+            new_c['departure_time'] = (new_c['departure_time'] + time_d).isoformat()
+            new_day.append(new_c)
+        data.extend(new_day)
+    return data
+
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Concatenate data files into a more usable format')
     parser.add_argument('-d', '--data', default="data.json")
@@ -91,18 +156,23 @@ if __name__ == "__main__":
     parser.add_argument('-y', '--labels', default="labels.npy")
     parser.add_argument('-c', '--centroids', default="centroids.npy")
     parser.add_argument('-g', '--gpx', default="design.gpx")
+    parser.add_argument('-f', '--fake', action='store_true')
     args = parser.parse_args()
 
     print "Building design matrix..."
     data = []
-    with open(args.data, 'r') as data_file:
-        data = json.load(data_file)
+    if args.fake:
+        data = generate_schedule(5)
+        print data
+    else:
+        with open(args.data, 'r') as data_file:
+            data = json.load(data_file)
 
     build_cluster_to_index_map(data)
     design_matrix, labels = build_design_matrix(data)
 
     out_filename = args.design
-    print "Design matrix shape: {0}, {1}".format(design_matrix.shape[0], design_matrix.shape[1])
+    print "Design matrix shape: {0} x {1}".format(design_matrix.shape[0], design_matrix.shape[1])
     with open(out_filename, 'w') as outfile:
         np.save(outfile, design_matrix)
         print "Wrote design matrix to {0}".format(out_filename)

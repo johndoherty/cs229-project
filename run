@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python build_location_data.py
+python build_location_data.py -d data_john_work
 python build_design_matrix.py
 #python train_and_test.py -m SVM
 python train_and_test.py -m LogisticRegression
